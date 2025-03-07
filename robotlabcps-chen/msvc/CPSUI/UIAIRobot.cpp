@@ -7,6 +7,7 @@
 #include "CPSMsg.h"
 #include "CPSAPI/CPSDef.h"
 #include <iostream>
+#include <sstream>
 #include <nlohmann/json.hpp>
 #include <map>
 #include <string>
@@ -90,10 +91,42 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
 {
         json j = json::parse(data);
         std::string state = j["name"];
-        std::array<int,6> data_pose = j["value"];
-        UI_INFO("哈哈，%s",data);
+        std::vector<double> data_pose = j["value"];
 
+        std::stringstream ss;
+        ss << "["; // 添加左括号
+        for (size_t i = 0; i < data_pose.size(); i++) {
+        ss << data_pose[i]; // 添加数组元素
+        if (i < data_pose.size() - 1) {
+            ss << ","; // 添加逗号（除了最后一个元素）
+        }
+        }
+        ss << "]"; // 添加右括号
 
+        // 将 stringstream 转换为字符串
+        std::string command = ss.str();
+        //UI_INFO("状态：%s,目标位姿%s",command.c_str());
+
+        if(state == "error"){
+            UI_INFO("要撞桌子了");
+        }
+        else if (state == "catch"){
+                UI_INFO("到达目的位姿，准备抓取");
+                //rtde_control.moveL({command},0.1,0.2);
+        }
+        else if (state == "move"){
+                UI_INFO("移动中%s",command.c_str());
+                RTDEReceiveInterface rtde_receive("192.168.12.252");
+                std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
+                UI_INFO("%d,%d",ActualTCPPose[0],ActualTCPPose[1]);
+                //rtde_control.moveL({command},0.1,0.2);
+                //std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
+                //m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
+        }
+        else {
+                UI_INFO("打错了");
+        }
+        }
 //
 //	// 连接UR
 //	RTDEControlInterface rtde_control("192.168.12.252");//both are UR's IP, not PC
@@ -113,20 +146,5 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
 //	printf("Grasp done\n");
 //
 //	// Stop the RTDE control script
-//	rtde_control.stopScript();
-//    if(data_pose=="error"){
-//        UI_INFO("要撞桌子了");
-//    }
-//    else if (data_pose=="catch"){
-//            UI_INFO("到达目的位姿，准备抓取");
-//            rtde_control.moveL({data_pose},0.1,0.2);
-//    }
-//    else {
-//            UI_INFO("移动位置%s",data_pose);
-//            rtde_control.moveL({data_pose},0.1,0.2);
-//            std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
-//            m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
-//    }
+//  rtde_control.stopScript();
 
-
-}
