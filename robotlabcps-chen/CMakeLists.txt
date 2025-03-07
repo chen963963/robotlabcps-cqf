@@ -16,7 +16,6 @@ ADD_DEFINITIONS(-std=c++14)
 include_directories("./include")
 include_directories("./share")
 
-
 link_directories("./lib")
 
 add_subdirectory("./msvc/CPSUI")

@@ -1,0 +1,20 @@
+tqdm
+einops
+spaces
+timm
+transformers
+#samv2
+gradio
+supervision
+<<<<<<< HEAD
+# opencv-python
+pytest
+# numpy==1.21.1
+# matplotlib==3.5.1
+=======
+opencv-python
+pytest
+numpy #==1.21.1
+matplotlib #==3.5.1
+>>>>>>> beta
+scipy #==1.7.3

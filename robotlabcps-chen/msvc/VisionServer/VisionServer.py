@@ -3,11 +3,11 @@ import cv2
 import time
 import os
 import threading
-
+import logging
 import sys
-sys.path.append(r'D:\ZhangChen\robotlabcps\python')
+sys.path.append("/home/chenqifan/robotlabcps-cqf/robotlabcps-chen/python")
 from pyjcpsapi import jcpsapi
-
+from Servo import Servo
 
 
 CAMERA_SERVER_DEV_ID = 774
@@ -15,12 +15,36 @@ VISION_SERVER_DEV_ID = 775
 MOVE_SERVER_DEV_ID   = 776
 VISION_SERVER_APP_ID = 4098  # APP的id需要在[0x1001,0x2000]范围内
 
+MSG_PREDICT = 0x1102
+MSG_PREDICT_RSP = 0x1103
+def configure_logger(log_dir: str) -> logging.Logger:
+    """Configure and return training logger.
+
+    Args:
+        log_dir: Directory to store log files
+
+    Returns:
+        Configured logger instance
+    """
+    os.makedirs(log_dir, exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[
+            logging.FileHandler(os.path.join(log_dir, 'servo.log')),
+            logging.StreamHandler()
+        ]
+    )
+    return logging.getLogger(__name__)
+
 
 class VisionHandler(threading.Thread):
     def __init__(self, api):
         super(VisionHandler, self).__init__()
         self._api = api
         self._stop_flag = False
+        self.path = None
 
     def run(self):
         while not self._stop_flag:
@@ -32,13 +56,42 @@ class VisionHandler(threading.Thread):
 
     def process_request(self, msg):
         from_id, msg_type, json_data, msg_len = msg
-        print(json_data['value'])
+        path = json_data['path']
+        self.path = path
+        print(path)
         #构造抓取结果
-        target_pose = [1.309,-1.633, 1.269, -1.207, -1.591, -0.288]
-        move_command = {'name': 'grasp command', 'value': target_pose} 
-        self._api.async_send_json_msg_to_app(MOVE_SERVER_DEV_ID, msg_type, move_command)
+        if msg_type==MSG_PREDICT:#条件记得改！！！！
+            state,new_pose = self.run_servo_logic()
+            target_pose =np.array(new_pose).tolist()
+            print(state)
+            print("New pose:", target_pose)
+        else:
+            target_pose = [1.309,-1.633, 1.269, -1.207, -1.591, -0.288]
+        move_command = {'name': state, 'value': target_pose}
+        msg_type = MSG_PREDICT_RSP
+        self._api.async_send_json_msg_to_app(from_id, msg_type, move_command)
         # self._api.async_send_json_msg_to_bus(msg_type, grasp_command)
 
+    def run_servo_logic(self):
+        # 初始化 Servo 类并运行视觉伺服逻辑
+        logger = configure_logger('./servo_log')  # 配置日志
+        final_pose = np.array([-0.1644, -0.5405, 0.3608, -0.2147, -3.0822, -0.0482])  # 目标位姿
+        weight = [-0.6, 0, 0.3, 0, 0, -0.45]  # 运动权重
+
+        # 创建 Servo 实例
+        node = Servo(final_pose, weight, logger)
+
+        # 设置目标图像和实时图像
+        node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/bag_goal.jpg'  # 替换为你的目标图像路径
+        node.rgb_live = '/home/chenqifan/IBVS_keypoint_based/bag_live.jpg'
+        #node.rgb_live = os.path.join(self.path,"color","0.png")  # 替换为你的实时图像路径
+
+        # 运行视觉伺服逻辑
+        node.servo_thread.start()
+        node.servo_thread.join()  # 等待线程完成
+
+        # 返回 new_pose
+        return node.state,node.new_pose
 
 def main():
     # create and start handler

@@ -16,7 +16,7 @@ public:
 
     virtual void OnCPSMsg(uint32_t from_id, uint32_t msg_type, const char* data, uint32_t msg_len);
     
-    virtual void MoveURThreadFunc();
+    virtual void MoveURThreadFunc(const char* data);
 protected:
     CCPSAPI* m_cpsapi = nullptr;
 

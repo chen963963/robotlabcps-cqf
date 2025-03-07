@@ -389,3 +389,6 @@ eigen-3.4.0
 
 # CameraServer output
 msvc/CameraServer/out/
+#ignore model
+*.bin
+*.pt

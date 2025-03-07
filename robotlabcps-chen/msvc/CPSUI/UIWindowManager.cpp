@@ -1,6 +1,7 @@
 #include "UIWindowManager.h"
 #include "UIMainWindow.h"
 #include "UIApplication.h"
+#include "UIAIRobot.h"
 #include "IconsFontAwesome5.h"
 #include "UIUtils.h"
 #include "UIFontLoader.h"

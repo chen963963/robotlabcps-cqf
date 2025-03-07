@@ -1,7 +1,7 @@
 import time
 import threading
 import sys
-sys.path.append(r'D:\ZhangChen\robotlabcps\python')
+sys.path.append("/home/chenqifan/robotlabcps-cqf/robotlabcps-chen/python")
 
 from pyjcpsapi import jcpsapi
 

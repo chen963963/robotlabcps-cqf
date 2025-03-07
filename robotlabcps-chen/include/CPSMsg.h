@@ -1,10 +1,11 @@
 #pragma once
 
-// UI和CamerServer之间通信消息ID定义
+// UI锟斤拷CamerServer之锟斤拷通锟斤拷锟斤拷息ID锟斤拷锟斤拷
 #define MSG_CAPTURE_IMAGE  0x1100
 #define MSG_CAPTURE_IMAGE_RSP  0x1101
+#define MSG_PREDICT  0x1102
+#define MSG_PREDICT_RSP  0x1103
 
-
-// UI和VisionServer之间通信消息ID定义
+// UI锟斤拷VisionServer之锟斤拷通锟斤拷锟斤拷息ID锟斤拷锟斤拷
 
 
