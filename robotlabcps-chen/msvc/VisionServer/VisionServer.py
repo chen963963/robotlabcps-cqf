@@ -5,6 +5,9 @@ import os
 import threading
 import logging
 import sys
+
+import torch
+
 sys.path.append("/home/chenqifan/robotlabcps-cqf/robotlabcps-chen/python")
 from pyjcpsapi import jcpsapi
 from Servo import Servo
@@ -45,6 +48,7 @@ class VisionHandler(threading.Thread):
         self._api = api
         self._stop_flag = False
         self.path = None
+        self.index = 0
 
     def run(self):
         while not self._stop_flag:
@@ -75,14 +79,15 @@ class VisionHandler(threading.Thread):
     def run_servo_logic(self):
         # 初始化 Servo 类并运行视觉伺服逻辑
         logger = configure_logger('./servo_log')  # 配置日志
-        final_pose = np.array([-0.1644, -0.5405, 0.3608, -0.2147, -3.0822, -0.0482])  # 目标位姿
+        final_pose = torch.tensor([-0.1644, -0.5405, 0.3608, -0.2147, -3.0822, -0.0482])  # 目标位姿
         weight = [-0.6, 0, 0.3, 0, 0, -0.45]  # 运动权重
 
         # 创建 Servo 实例
-        node = Servo(final_pose, weight, logger)
-
+        node = Servo(final_pose, weight, logger,self.index)
+        self.index+=1
         # 设置目标图像和实时图像
-        node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/bag_goal.jpg'  # 替换为你的目标图像路径
+        node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/light.png'
+        #node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/bag_goal.jpg'  # 替换为你的目标图像路径
         #node.rgb_live = '/home/chenqifan/IBVS_keypoint_based/bag_live.jpg'
         node.rgb_live = os.path.join(self.path,"color","0.png")  # 替换为你的实时图像路径
 

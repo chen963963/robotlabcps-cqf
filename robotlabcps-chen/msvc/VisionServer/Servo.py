@@ -24,7 +24,7 @@ model_trans="./my_utils/trans_0213_3.pth"
 model_rot="./my_utils/rot_model_0222-1.pth"
 log_dir="./servo_log"
 class Servo:
-    def __init__(self, final_pose, weight, logger):
+    def __init__(self, final_pose, weight, logger,index):
         self.bridge = CvBridge()
         self.fps = 30
         self.process_flag = False
@@ -43,6 +43,7 @@ class Servo:
         self.final_pose = final_pose
         self.weight = weight
         self.logger = logger
+        self.index = index
 
         self.lock = threading.Lock()
         # servoing thread
@@ -121,7 +122,7 @@ class Servo:
         print("已拍摄目标图像, 等待3秒...")
         time.sleep(3)
         print("开始执行视觉伺服...")
-        index = 0
+        #index = 0
         while True:
             # Compute pixel correspondences between new observation and bottleneck observation.
             with torch.no_grad():
@@ -134,11 +135,10 @@ class Servo:
 
                 fig1, fig2 = draw_correspondences(points1, points2, image1_pil, image2_pil)
 
-                image_path_1 = os.path.join(log_dir, f'./keypoints_live_{index}.png')
+                image_path_1 = os.path.join(log_dir, f'./keypoints_live_{self.index}.png')
                 fig1.savefig(image_path_1)
-                image_path_2 = os.path.join(log_dir, f'./keypoints_goal_{index}.png')
+                image_path_2 = os.path.join(log_dir, f'./keypoints_goal_{self.index}.png')
                 fig2.savefig(image_path_2)
-                index += 1
             print("finish corresp")
             points1 = np.array(points1).reshape(1, 2 * num_pairs)
             points2 = np.array(points2).reshape(1, 2 * num_pairs)
@@ -150,6 +150,7 @@ class Servo:
             # live_pose = torch.tensor(ActualTCPPose)
             # rtde_r.disconnect()
             live_pose = torch.tensor([-318.34845, 476.89444, 395.504242, 1.614076, -0.791094, -1.838659])
+            print("当前误差是: %s", error)
             self.logger.info("当前误差是: %s", error)
             if error < ERR_THRESHOLD:
                 self.logger.info("Error small enough, servoing ends. \n")

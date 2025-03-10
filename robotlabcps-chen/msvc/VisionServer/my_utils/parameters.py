@@ -19,7 +19,7 @@ num_layers = 4  # Number of transformer encoder layers
 
 #Deployment hyperparameters    
 ERR_THRESHOLD = 50  #A generic error between the two sets of points
-PROMPT = 'bag'
+PROMPT = 'light'
 mode = 'relative'
 
 # camera resolution

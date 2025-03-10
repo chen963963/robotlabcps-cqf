@@ -116,12 +116,12 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
         }
         else if (state == "move"){
                 UI_INFO("移动中%s",command.c_str());
-                RTDEReceiveInterface rtde_receive("192.168.12.252");
-                std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-                UI_INFO("%d,%d",ActualTCPPose[0],ActualTCPPose[1]);
+                //RTDEReceiveInterface rtde_receive("192.168.12.252");
+                //std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
+                //UI_INFO("%d,%d",ActualTCPPose[0],ActualTCPPose[1]);
                 //rtde_control.moveL({command},0.1,0.2);
-                //std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
-                //m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
+                std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
+                m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
         }
         else {
                 UI_INFO("打错了");
