@@ -83,8 +83,8 @@ class VisionHandler(threading.Thread):
 
         # 设置目标图像和实时图像
         node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/bag_goal.jpg'  # 替换为你的目标图像路径
-        node.rgb_live = '/home/chenqifan/IBVS_keypoint_based/bag_live.jpg'
-        #node.rgb_live = os.path.join(self.path,"color","0.png")  # 替换为你的实时图像路径
+        #node.rgb_live = '/home/chenqifan/IBVS_keypoint_based/bag_live.jpg'
+        node.rgb_live = os.path.join(self.path,"color","0.png")  # 替换为你的实时图像路径
 
         # 运行视觉伺服逻辑
         node.servo_thread.start()
