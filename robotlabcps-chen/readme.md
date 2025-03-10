@@ -27,6 +27,7 @@ VisionServer模块得到CPSUI发送的当前照片路径和计算指令后，Ser
 ├── CPSUI.sln
 └── readme.md
 
+<<<<<<< HEAD
 # 项目使用
 ## 启用总线和UI界面
 cd bin 
