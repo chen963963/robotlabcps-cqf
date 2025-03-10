@@ -28,11 +28,11 @@ VisionServer模块得到CPSUI发送的当前照片路径和计算指令后，Ser
 └── readme.md
 
 ## 项目使用
-# 启用总线和UI界面
+### 启用总线和UI界面
 cd bin 
 sh start_bus.sh
 sh start.sh
-# 启用Camera和Vision
+### 启用Camera和Vision
 cd msvc/CameraServer
 python CameraServer.py
 cd ..
