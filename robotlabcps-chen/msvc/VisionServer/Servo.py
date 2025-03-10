@@ -11,6 +11,9 @@ from cv_bridge import CvBridge
 from rtde_control import RTDEControlInterface as RTDEControl
 from rtde_receive import RTDEReceiveInterface as RTDEReceive
 import sys
+
+#from msvc.VisionServer.Seg.florence_sam.seg_utils.tmp.create_training_data import goal_path
+
 sys.path.append('./dino-vit-features')
 from correspondences import find_correspondences, draw_correspondences
 from my_utils.MODEL_v2_2 import QuaternionAlignmentTransformer, Alpha
@@ -24,7 +27,7 @@ model_trans="./my_utils/trans_0213_3.pth"
 model_rot="./my_utils/rot_model_0222-1.pth"
 log_dir="./servo_log"
 class Servo:
-    def __init__(self, final_pose, weight, logger,index):
+    def __init__(self, final_pose,goal_pose, weight, logger,index):
         self.bridge = CvBridge()
         self.fps = 30
         self.process_flag = False
@@ -41,6 +44,7 @@ class Servo:
         self.model_rot.load_state_dict(torch.load(model_rot))
         self.model_rot.eval()
         self.final_pose = final_pose
+        self.goal_pose = goal_pose
         self.weight = weight
         self.logger = logger
         self.index = index
@@ -144,26 +148,27 @@ class Servo:
             points2 = np.array(points2).reshape(1, 2 * num_pairs)
 
             error = compute_error(points1, points2)
-            # rtde_r = RTDEReceive(IP)
-            # ActualTCPPose = rtde_r.getActualTCPPose()
-            # ActualQ = rtde_r.getActualQ()
-            # live_pose = torch.tensor(ActualTCPPose)
-            # rtde_r.disconnect()
-            live_pose = torch.tensor([-318.34845, 476.89444, 395.504242, 1.614076, -0.791094, -1.838659])
-            print("当前误差是: %s", error)
+            rtde_r = RTDEReceive(IP)
+            ActualTCPPose = rtde_r.getActualTCPPose()
+            ActualQ = rtde_r.getActualQ()
+            live_pose = torch.tensor(ActualTCPPose)
+            rtde_r.disconnect()
+            #live_pose = torch.tensor([-318.34845, 476.89444, 395.504242, 1.614076, -0.791094, -1.838659])
+            print("当前误差是:", error)
             self.logger.info("当前误差是: %s", error)
             if error < ERR_THRESHOLD:
                 self.logger.info("Error small enough, servoing ends. \n")
                 self.state="catch"
-                self.new_pose = self.final_pose-live_pose
+                self.new_pose = self.final_pose-self.goal_pose+live_pose
                 break
 
             ## 调用模型  ##
             prim_command = self.pred_action(points1, points2, live_pose)
             self.logger.info("predicted command: %s", prim_command)
-
+            print("predicted command: ", prim_command)
             command = [cmd * weight for cmd, weight in zip(prim_command, self.weight)]
             self.logger.info("weighted command %s", command)
+
 
             new_pose = [live_pose[0] + command[0], live_pose[1] + command[1], live_pose[2] + command[2],
                         live_pose[3] + command[5], live_pose[4] + command[3], live_pose[5] + command[4]]

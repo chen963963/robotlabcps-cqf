@@ -1,4 +1,4 @@
-## 项目修改介绍
+# 项目修改介绍
 项目基于robotlabcps——chen原版完善了VisionServer模块的功能，集成了原有的视觉算法在Servon.py文件中。
 CPSUI点击“拍照”，将拍照指令发送给CameraServer，然后将获取的图像存储到本地，将路径返回给CPSUI，再将路径和计算指令发送给VisionServer，
 VisionServer模块得到CPSUI发送的当前照片路径和计算指令后，Servo计算预测出运动指令以及当前状态，以json格式数据的方式返回给CPSUI。
@@ -6,7 +6,7 @@ VisionServer模块得到CPSUI发送的当前照片路径和计算指令后，Ser
 
 较于原版，新安装了nlohmann_json的相关库，便于在c++环境下解析CPSUI接收到的json格式数据。
 
-## 项目结构
+# 项目结构
 ├── CPSUI
 │   ├── ...
 ├── CameraServer
@@ -27,12 +27,12 @@ VisionServer模块得到CPSUI发送的当前照片路径和计算指令后，Ser
 ├── CPSUI.sln
 └── readme.md
 
-## 项目使用
-# 启用总线和UI界面
+# 项目使用
+## 启用总线和UI界面
 cd bin 
 sh start_bus.sh
 sh start.sh
-# 启用Camera和Vision
+## 启用Camera和Vision
 cd msvc/CameraServer
 python CameraServer.py
 cd ..

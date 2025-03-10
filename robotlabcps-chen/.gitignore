@@ -392,3 +392,5 @@ msvc/CameraServer/out/
 #ignore model
 *.bin
 *.pt
+#ignore photoes
+*.png

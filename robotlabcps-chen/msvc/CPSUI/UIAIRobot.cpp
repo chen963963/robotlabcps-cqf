@@ -43,7 +43,15 @@ void UIAIRobot::Draw()
 
     if (ImGui::Button(u8"拍照"))
     {
-
+//        std::vector<double> x = {-0.031, -0.45, 0.6, 1.5, -2.6, 0.3};
+//        x[2]-=0.3;
+//        RTDEControlInterface rtde_control("192.168.12.252");
+//        rtde_control.moveL({x},0.1,0.2);
+//        rtde_control.disconnect();
+//        RTDEReceiveInterface rtde_receive("192.168.12.252");
+//        std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
+//        rtde_receive.disconnect();
+//        UI_INFO("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
         UI_INFO(u8"发送拍照请求....");
         std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
         m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
@@ -106,25 +114,40 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
         // 将 stringstream 转换为字符串
         std::string command = ss.str();
         //UI_INFO("状态：%s,目标位姿%s",command.c_str());
-
         if(state == "error"){
             UI_INFO("要撞桌子了");
         }
         else if (state == "catch"){
                 UI_INFO("到达目的位姿，准备抓取");
-                //rtde_control.moveL({command},0.1,0.2);
+
+                RTDEControlInterface rtde_control("192.168.12.252");
+                rtde_control.moveL({data_pose},0.1,0.2);
+                rtde_control.disconnect();
+
+                RTDEReceiveInterface rtde_receive("192.168.12.252");
+                std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
+                UI_INFO("当前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
+                rtde_receive.disconnect();
+
+
         }
         else if (state == "move"){
                 UI_INFO("移动中%s",command.c_str());
-                //RTDEReceiveInterface rtde_receive("192.168.12.252");
-                //std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-                //UI_INFO("%d,%d",ActualTCPPose[0],ActualTCPPose[1]);
-                //rtde_control.moveL({command},0.1,0.2);
+
+                RTDEControlInterface rtde_control("192.168.12.252");
+                rtde_control.moveL({data_pose},0.1,0.2);
+                rtde_control.disconnect();
+
+                RTDEReceiveInterface rtde_receive("192.168.12.252");
+                std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
+                UI_INFO("当前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
+                rtde_receive.disconnect();
+
                 std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
                 m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
         }
         else {
-                UI_INFO("打错了");
+                UI_INFO("incorrect state");
         }
         }
 //
