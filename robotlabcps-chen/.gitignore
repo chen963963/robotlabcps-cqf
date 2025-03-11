@@ -388,9 +388,13 @@ publish
 eigen-3.4.0
 
 # CameraServer output
-msvc/CameraServer/out/
+robotlabcps-chen/msvc/CameraServer/out/
+
 #ignore model
 *.bin
 *.pt
 #ignore photoes
 *.png
+
+robotlabcps-chen/msvc/VisionServer/Seg/Florence-2-base
+
