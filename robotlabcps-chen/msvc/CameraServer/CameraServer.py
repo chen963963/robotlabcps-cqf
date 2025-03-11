@@ -81,7 +81,6 @@ class CameraHandler(threading.Thread):
         # 按照日期创建文件夹
         save_path = os.path.join(self._save_path, time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
         os.makedirs(save_path, exist_ok=True)
-        os.makedirs(os.path.join(save_path, "color"), exist_ok=True)
 
         # 实时显示图像的窗口
         cv2.namedWindow("live", cv2.WINDOW_AUTOSIZE)
@@ -104,7 +103,7 @@ class CameraHandler(threading.Thread):
                 # 每隔 0.2 秒保存一张图像
                 current_time = time.time()
                 if current_time - last_save_time >= 0.2:
-                    cv2.imwrite(os.path.join(save_path, "color", "{}.png".format(saved_count)), color_image)
+                    cv2.imwrite(os.path.join(save_path,"{}.png".format(saved_count)), color_image)
                     saved_count += 1
                     last_save_time = current_time  # 更新上次保存的时间
 

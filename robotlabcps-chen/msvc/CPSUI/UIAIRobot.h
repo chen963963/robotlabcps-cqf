@@ -1,7 +1,7 @@
 #pragma once
 #include "UIBaseWindow.h"
 #include "CPSAPI/CPSAPI.h"
-
+#include "UIImageView.h"
 
 class UIAIRobot :
     public UIBaseWindow
@@ -19,6 +19,7 @@ public:
     virtual void MoveURThreadFunc(const char* data);
 protected:
     CCPSAPI* m_cpsapi = nullptr;
-
+    UIImageBasePtr m_image = nullptr;
+    float m_image_zoom = 1.0f;
 };
 

@@ -6,6 +6,7 @@
 #include "UIApplication.h"
 #include "CPSMsg.h"
 #include "CPSAPI/CPSDef.h"
+#include "UIImageView.h"
 #include <iostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
@@ -20,7 +21,8 @@
 using json=nlohmann::json;
 using namespace ur_rtde;
 using namespace std::chrono;
-
+std::string path="";
+std::string path_old="";
 
 UIAIRobot::UIAIRobot(UIGLWindow* main_win, const char* title) :UIBaseWindow(main_win, title)
 {
@@ -29,6 +31,8 @@ UIAIRobot::UIAIRobot(UIGLWindow* main_win, const char* title) :UIBaseWindow(main
 
 void UIAIRobot::Draw()
 {
+
+
     if (!m_show)
     {
         return;
@@ -41,22 +45,26 @@ void UIAIRobot::Draw()
     }
     char buf[64] = { 0 };
 
-    if (ImGui::Button(u8"拍照"))
+    if (ImGui::Button(u8"Capture"))
     {
-//        std::vector<double> x = {-0.031, -0.45, 0.6, 1.5, -2.6, 0.3};
-//        x[2]-=0.3;
-//        RTDEControlInterface rtde_control("192.168.12.252");
-//        rtde_control.moveL({x},0.1,0.2);
-//        rtde_control.disconnect();
-//        RTDEReceiveInterface rtde_receive("192.168.12.252");
-//        std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-//        rtde_receive.disconnect();
-//        UI_INFO("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
-        UI_INFO(u8"发送拍照请求....");
+
         std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
         m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
-    }
 
+
+    }
+    ImGui::SliderFloat("Zoom", &m_image_zoom, 0.1f, 5.0f, "%.1f");
+
+    if (path_old!=path)
+	{
+        m_image = UIImageFactory::LoadFromFile(path.c_str());
+        path_old = path ;
+	}
+
+    if (m_image && (path_old == path))
+	{
+		m_image->Draw(int(m_image->GetWidth() * m_image_zoom), int(m_image->GetHeight() * m_image_zoom));
+	}
     ImGui::End();
 }
 
@@ -64,21 +72,21 @@ void UIAIRobot::OnCPSMsg(uint32_t from_id, uint32_t msg_type, const char* data, 
 {
 	switch (msg_type)
 	{
-	case MSG_CAPTURE_IMAGE_RSP:
+	case MSG_CAPTURE_IMAGE_RSP:{
 		UI_INFO("Received from CameraServer %s", data);
 
-		//std::string json_data = "{\"name\":\"capture\", \"value\" : data}";
-        //m_cpsapi->SendAPPMsg(775, MSG_PREDICT, json_data.c_str(), json_data.size()+1);
+		json j = json::parse(data);
+        std::string image_path = j["path"];
+        image_path.append("/0.png");
+        path = image_path;
+        UI_INFO("path is %s",path.c_str());
+
+
 
         m_cpsapi->SendAPPMsg(775, MSG_PREDICT, data, strlen(data)+1);
-        // 创建新线程，发送控制指令给UR
-		//std::thread newThread(&UIAIRobot::MoveURThreadFunc, this);
-		// 等待新线程执行完毕
-		//newThread.join();
 
-		//UI_INFO("UR move done");
-		break;
-	case MSG_PREDICT_RSP:
+		break;}
+	case MSG_PREDICT_RSP:{
 //	    Json::CharReaderBuilder reader;
 //        Json::Value root;
 //        std::string errs;
@@ -87,11 +95,9 @@ void UIAIRobot::OnCPSMsg(uint32_t from_id, uint32_t msg_type, const char* data, 
 //	    std::string name = root["name"].asString();
 //        std::string value = root["value"].asString();
 	    UI_INFO("Received from VisionServer %s", data);
-	    // 创建新线程，发送控制指令给UR
 		std::thread newThread(&UIAIRobot::MoveURThreadFunc, this, data);
-		// 等待新线程执行完毕
 		newThread.join();
-	    break;
+	    break;}
 	}
 }
 
@@ -102,23 +108,20 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
         std::vector<double> data_pose = j["value"];
 
         std::stringstream ss;
-        ss << "["; // 添加左括号
+        ss << "["; 
         for (size_t i = 0; i < data_pose.size(); i++) {
-        ss << data_pose[i]; // 添加数组元素
+        ss << data_pose[i]; 
         if (i < data_pose.size() - 1) {
-            ss << ","; // 添加逗号（除了最后一个元素）
+            ss << ","; 
         }
         }
-        ss << "]"; // 添加右括号
+        ss << "]"; 
 
-        // 将 stringstream 转换为字符串
         std::string command = ss.str();
-        //UI_INFO("状态：%s,目标位姿%s",command.c_str());
         if(state == "error"){
-            UI_INFO("要撞桌子了");
         }
         else if (state == "catch"){
-                UI_INFO("到达目的位姿，准备抓取");
+                UI_INFO("已到达目标位姿，准备抓取");
 
                 RTDEControlInterface rtde_control("192.168.12.252");
                 rtde_control.moveL({data_pose},0.1,0.2);
@@ -126,13 +129,13 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
 
                 RTDEReceiveInterface rtde_receive("192.168.12.252");
                 std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-                UI_INFO("当前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
+                UI_INFO("目前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
                 rtde_receive.disconnect();
 
 
         }
         else if (state == "move"){
-                UI_INFO("移动中%s",command.c_str());
+                UI_INFO("move command%s",command.c_str());
 
                 RTDEControlInterface rtde_control("192.168.12.252");
                 rtde_control.moveL({data_pose},0.1,0.2);
@@ -140,7 +143,7 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
 
                 RTDEReceiveInterface rtde_receive("192.168.12.252");
                 std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-                UI_INFO("当前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
+                UI_INFO("目前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
                 rtde_receive.disconnect();
 
                 std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
@@ -149,25 +152,5 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
         else {
                 UI_INFO("incorrect state");
         }
-        }
-//
-//	// 连接UR
-//	RTDEControlInterface rtde_control("192.168.12.252");//both are UR's IP, not PC
-//	RTDEReceiveInterface rtde_receive("192.168.12.252");
-//
-//	//到达拍照位姿
-//	rtde_control.moveJ({ 1.948, -1.316, 0.830, -0.925, -1.921, 0.393 }, 0.25, 0.2);//rad
-//	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//
-//	// Stop the movement
-//	rtde_control.stopJ(0.5);
-//	printf("moveJ done\n");
-//
-//	//grasp pose
-//	rtde_control.moveJ({ 1.309,-1.633, 1.269, -1.207, -1.591, -0.288 }, 0.25, 0.2);
-//	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//	printf("Grasp done\n");
-//
-//	// Stop the RTDE control script
-//  rtde_control.stopScript();
+}
 
