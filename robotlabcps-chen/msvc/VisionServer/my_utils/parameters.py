@@ -18,8 +18,8 @@ num_heads = 8  # Number of attention heads
 num_layers = 4  # Number of transformer encoder layers
 
 #Deployment hyperparameters    
-ERR_THRESHOLD = 50  #A generic error between the two sets of points
-PROMPT = 'light'
+ERR_THRESHOLD = 40  #A generic error between the two sets of points
+PROMPT = 'bag'
 mode = 'relative'
 
 # camera resolution

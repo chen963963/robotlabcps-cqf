@@ -20,6 +20,8 @@ public:
 protected:
     CCPSAPI* m_cpsapi = nullptr;
     UIImageBasePtr m_image = nullptr;
+    UIImageBasePtr key_image = nullptr;
+    UIImageBasePtr key0_image = nullptr;
     float m_image_zoom = 1.0f;
 };
 

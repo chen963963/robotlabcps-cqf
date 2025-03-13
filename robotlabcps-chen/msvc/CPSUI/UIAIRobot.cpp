@@ -21,8 +21,14 @@
 using json=nlohmann::json;
 using namespace ur_rtde;
 using namespace std::chrono;
-std::string path="";
-std::string path_old="";
+std::string m_image_path="";
+std::string m_image_path_old="";
+
+std::string key_image_path="";
+std::string key_image_path_old="";
+
+std::string key0_image_path="";
+std::string key0_image_path_old="";
 
 UIAIRobot::UIAIRobot(UIGLWindow* main_win, const char* title) :UIBaseWindow(main_win, title)
 {
@@ -55,15 +61,37 @@ void UIAIRobot::Draw()
     }
     ImGui::SliderFloat("Zoom", &m_image_zoom, 0.1f, 5.0f, "%.1f");
 
-    if (path_old!=path)
+    if (m_image_path_old!=m_image_path)
 	{
-        m_image = UIImageFactory::LoadFromFile(path.c_str());
-        path_old = path ;
+        m_image = UIImageFactory::LoadFromFile(m_image_path.c_str());
+        m_image_path_old = m_image_path ;
 	}
 
-    if (m_image && (path_old == path))
+
+
+
+    if (m_image && (m_image_path_old == m_image_path))
 	{
+	    //ImVec2 image_position(100.0f, 50.0f);  // 你可以根据需要调整这些值
+        //ImGui::SetCursorPos(image_position);
 		m_image->Draw(int(m_image->GetWidth() * m_image_zoom), int(m_image->GetHeight() * m_image_zoom));
+	}
+
+    if (key_image_path_old!=key_image_path)
+	{
+        key_image = UIImageFactory::LoadFromFile(key_image_path.c_str());
+        key0_image = UIImageFactory::LoadFromFile(key0_image_path.c_str());
+        key_image_path_old = key_image_path ;
+	}
+
+    if (key_image && (key_image_path_old == key_image_path))
+	{
+	    ImVec2 image_position(650.0f, 100.0f);  // 你可以根据需要调整这些值
+        ImGui::SetCursorPos(image_position);
+		key_image->Draw(int(key_image->GetWidth() * 0.5* m_image_zoom), int(key_image->GetHeight() * 0.5* m_image_zoom));
+		ImVec2 image_position0(650.0f, 340.0f);  // 你可以根据需要调整这些值
+        ImGui::SetCursorPos(image_position0);
+		key0_image->Draw(int(key0_image->GetWidth() * 0.5* m_image_zoom), int(key0_image->GetHeight() * 0.5* m_image_zoom));
 	}
     ImGui::End();
 }
@@ -73,14 +101,13 @@ void UIAIRobot::OnCPSMsg(uint32_t from_id, uint32_t msg_type, const char* data, 
 	switch (msg_type)
 	{
 	case MSG_CAPTURE_IMAGE_RSP:{
-		UI_INFO("Received from CameraServer %s", data);
+		//UI_INFO("Received from CameraServer %s", data);
 
 		json j = json::parse(data);
         std::string image_path = j["path"];
         image_path.append("/0.png");
-        path = image_path;
-        UI_INFO("path is %s",path.c_str());
-
+        m_image_path = image_path;
+        //UI_INFO("path is %s",m_image_path.c_str());
 
 
         m_cpsapi->SendAPPMsg(775, MSG_PREDICT, data, strlen(data)+1);
@@ -94,7 +121,7 @@ void UIAIRobot::OnCPSMsg(uint32_t from_id, uint32_t msg_type, const char* data, 
 //	    std::istringstream s(data);
 //	    std::string name = root["name"].asString();
 //        std::string value = root["value"].asString();
-	    UI_INFO("Received from VisionServer %s", data);
+//	    UI_INFO("Received from VisionServer %s", data);
 		std::thread newThread(&UIAIRobot::MoveURThreadFunc, this, data);
 		newThread.join();
 	    break;}
@@ -106,6 +133,13 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
         json j = json::parse(data);
         std::string state = j["name"];
         std::vector<double> data_pose = j["value"];
+        std::string image_path = j["image_path"];
+        std::string image_path0 = j["image_path0"];
+
+        key_image_path = image_path;
+        key0_image_path = image_path0;
+
+        //UI_INFO("key_path is %s",key_image_path.c_str());
 
         std::stringstream ss;
         ss << "["; 
@@ -123,28 +157,17 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
         else if (state == "catch"){
                 UI_INFO("已到达目标位姿，准备抓取");
 
-                RTDEControlInterface rtde_control("192.168.12.252");
+                RTDEControlInterface rtde_control("192.168.12.252",50);
                 rtde_control.moveL({data_pose},0.1,0.2);
                 rtde_control.disconnect();
-
-                RTDEReceiveInterface rtde_receive("192.168.12.252");
-                std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-                UI_INFO("目前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
-                rtde_receive.disconnect();
-
 
         }
         else if (state == "move"){
                 UI_INFO("move command%s",command.c_str());
 
-                RTDEControlInterface rtde_control("192.168.12.252");
+                RTDEControlInterface rtde_control("192.168.12.252",50);
                 rtde_control.moveL({data_pose},0.1,0.2);
                 rtde_control.disconnect();
-
-                RTDEReceiveInterface rtde_receive("192.168.12.252");
-                std::vector <double> ActualTCPPose = rtde_receive.getActualTCPPose();
-                UI_INFO("目前位姿%.3f,%.3f,%.3f,%.3f,%.3f,%.3f",ActualTCPPose[0],ActualTCPPose[1],ActualTCPPose[2],ActualTCPPose[3],ActualTCPPose[4],ActualTCPPose[5]);
-                rtde_receive.disconnect();
 
                 std::string json_data = "{\"name\":\"capture\", \"value\" : 1}";
                 m_cpsapi->SendAPPMsg(774, MSG_CAPTURE_IMAGE, json_data.c_str(), json_data.size()+1);
@@ -153,4 +176,3 @@ void UIAIRobot::MoveURThreadFunc(const char* data)
                 UI_INFO("incorrect state");
         }
 }
-

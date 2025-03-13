@@ -65,13 +65,13 @@ class VisionHandler(threading.Thread):
         print(path)
         #构造抓取结果
         if msg_type==MSG_PREDICT:#条件记得改！！！！
-            state,new_pose = self.run_servo_logic()
+            state,new_pose,image_path1,image_path2= self.run_servo_logic()
             target_pose =np.array(new_pose).tolist()
             print(state)
             print("New pose:", target_pose)
         else:
             target_pose = [1.309,-1.633, 1.269, -1.207, -1.591, -0.288]
-        move_command = {'name': state, 'value': target_pose}
+        move_command = {'name': state, 'value': target_pose , 'image_path':image_path1,'image_path0':image_path2}
         msg_type = MSG_PREDICT_RSP
         self._api.async_send_json_msg_to_app(from_id, msg_type, move_command)
         # self._api.async_send_json_msg_to_bus(msg_type, grasp_command)
@@ -79,25 +79,25 @@ class VisionHandler(threading.Thread):
     def run_servo_logic(self):
         # 初始化 Servo 类并运行视觉伺服逻辑
         logger = configure_logger('./servo_log')  # 配置日志
-        goal_pose = torch.tensor([-0.0326, -0.4431,  0.4434,  1.4920, -2.6208,  0.2863])
-        final_pose = torch.tensor([-0.0326, -0.4431,  0.3,  1.4920, -2.6208,  0.2862])  # 目标位姿
-        weight = [-0.6, 0, 0.3, 0, 0, -0.45]  # 运动权重
+        goal_pose = torch.tensor([0.0356, -0.3057,  0.4143, -0.7668, -2.9868, -0.0674])
+        final_pose = torch.tensor([0.0357, -0.4589,  0.3059, -0.7669, -2.9868, -0.0675])  # 目标位姿
+        weight = [0, -0.5, 0.6, 0, 0, 0]  # 运动权重
 
         # 创建 Servo 实例
         node = Servo(final_pose,goal_pose, weight, logger,self.index)
         self.index+=1
         # 设置目标图像和实时图像
-        node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/light.png'
-        #node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/bag_goal.jpg'  # 替换为你的目标图像路径
-        node.rgb_live = '/home/chenqifan/IBVS_keypoint_based/light.png'
-        #node.rgb_live = os.path.join(self.path,"0.png")  # 替换为你的实时图像路径
+        #node.rgb_goal = '/home/chenqifan/IBVS_keypoint_based/light.png'
+        node.rgb_goal = '/home/chenqifan/robotlabcps-cqf/robotlabcps-chen/msvc/goal_image.png'  # 替换为你的目标图像路径
+        #node.rgb_live = '/home/chenqifan/IBVS_keypoint_based/light.png'
+        node.rgb_live = os.path.join(self.path,"0.png")  # 替换为你的实时图像路径
 
         # 运行视觉伺服逻辑
         node.servo_thread.start()
         node.servo_thread.join()  # 等待线程完成
 
         # 返回 new_pose
-        return node.state,node.new_pose
+        return node.state,node.new_pose,node.image_path_1,node.image_path_2
 
 def main():
     # create and start handler

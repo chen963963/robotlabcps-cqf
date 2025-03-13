@@ -25,7 +25,7 @@ IP = "192.168.12.252"
 warnings.filterwarnings("ignore")
 model_trans="./my_utils/trans_0213_3.pth"
 model_rot="./my_utils/rot_model_0222-1.pth"
-log_dir="./servo_log"
+log_dir="/home/chenqifan/robotlabcps-cqf/robotlabcps-chen/msvc/VisionServer/servo_log"
 class Servo:
     def __init__(self, final_pose,goal_pose, weight, logger,index):
         self.bridge = CvBridge()
@@ -36,6 +36,8 @@ class Servo:
         self.R_cam2gripper = np.eye(3)
         self.new_pose = None  # 新增属性，用于存储 new_pose
         self.state = None
+        self.image_path_1 = None
+        self.image_path_2 = None
         # 加载模型
         self.model_trans = Alpha()
         self.model_trans.load_state_dict(torch.load(model_trans))
@@ -138,10 +140,12 @@ class Servo:
                                                                                     stride)
 
                 fig1, fig2 = draw_correspondences(points1, points2, image1_pil, image2_pil)
-
+                #/home/chenqifan /robotlabcps-cqf/robotlabcps-chen/msvc/VisionServer/serve_log
                 image_path_1 = os.path.join(log_dir, f'./keypoints_live_{self.index}.png')
+                self.image_path_1 = image_path_1
                 fig1.savefig(image_path_1)
                 image_path_2 = os.path.join(log_dir, f'./keypoints_goal_{self.index}.png')
+                self.image_path_2 = image_path_2
                 fig2.savefig(image_path_2)
             print("finish corresp")
             points1 = np.array(points1).reshape(1, 2 * num_pairs)
